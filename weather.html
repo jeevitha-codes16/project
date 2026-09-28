@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Weather | FLARE</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="weather.css">
+
+</head>
+
+<body>
+
+
+<header class="navbar">
+
+    <a href="index.html" class="logo">
+        <span>F</span> FLARE
+    </a>
+
+    <nav>
+
+        <a href="index.html">
+            Home
+        </a>
+
+        <a href="weather.html" class="active">
+            Weather
+        </a>
+
+        <a href="movie.html">
+            Movies
+        </a>
+
+    </nav>
+
+</header>
+
+
+<main class="weather-container">
+
+    <div class="heading">
+
+        <p class="eyebrow">
+            CURRENT CONDITIONS
+        </p>
+
+        <h1>
+            What's the weather like?
+        </h1>
+
+        <p>
+            Search a city to see its current weather.
+        </p>
+
+    </div>
+
+
+    <form id="weatherForm" class="search-box">
+
+        <input
+            id="cityInput"
+            type="text"
+            placeholder="Enter city name"
+            required
+        >
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+
+    <p id="weatherStatus" class="status"></p>
+
+
+    <section
+        id="weatherResult"
+        class="weather-result hidden"
+    ></section>
+
+</main>
+
+
+<footer>
+    FLARE • Weather
+</footer>
+
+
+<script
+    type="module"
+    src="weather.js"
+></script>
+
+</body>
+</html>
