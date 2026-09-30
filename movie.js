@@ -1,175 +1,182 @@
-import { fetchJSON } from "./api.js";
+/* =========================================
+   FLARE - MOVIE SEARCH
+   OMDb API
+========================================= */
 
 
-const form =
-    document.querySelector("#movieForm");
+/* =========================================
+   1. PUT YOUR OMDb API KEY HERE
+========================================= */
 
-const input =
-    document.querySelector("#movieInput");
-
-const grid =
-    document.querySelector("#movieGrid");
-
-const status =
-    document.querySelector("#movieStatus");
-
-const keyInput =
-    document.querySelector("#apiKey");
-
-const saveKey =
-    document.querySelector("#saveKey");
+const API_KEY = "7b946ca1";
 
 
-keyInput.value =
-    localStorage.getItem("omdb_api_key") || "";
+/* =========================================
+   2. OMDb API URL
+========================================= */
+
+const API_URL = "https://www.omdbapi.com/";
 
 
-saveKey.addEventListener(
-    "click",
-    () => {
+/* =========================================
+   3. GET HTML ELEMENTS
+========================================= */
 
-        const key =
-            keyInput.value.trim();
+const form = document.getElementById("movieForm");
 
+const input = document.getElementById("movieInput");
 
-        if (!key) {
+const grid = document.getElementById("movieGrid");
 
-            status.textContent =
-                "Please enter your OMDb API key.";
-
-            return;
-        }
+const status = document.getElementById("movieStatus");
 
 
-        localStorage.setItem(
-            "omdb_api_key",
-            key
-        );
+/* =========================================
+   4. SEARCH MOVIES
+========================================= */
+
+async function searchMovies(movieName) {
+
+    const url =
+        `${API_URL}?apikey=${API_KEY}` +
+        `&s=${encodeURIComponent(movieName)}` +
+        `&type=movie`;
 
 
-        status.textContent =
-            "API key saved.";
-    }
-);
+    const response = await fetch(url);
 
 
-const searchMovies = async (title) => {
-
-    const key =
-        localStorage.getItem("omdb_api_key");
-
-
-    if (!key) {
+    if (!response.ok) {
 
         throw new Error(
-            "Please enter your OMDb API key first."
+            "Unable to connect to OMDb."
         );
+
     }
 
 
-    const searchURL =
-        `https://www.omdbapi.com/?apikey=${encodeURIComponent(key)}&s=${encodeURIComponent(title)}&type=movie`;
+    const data = await response.json();
 
 
-    const searchData =
-        await fetchJSON(searchURL);
+    /*
+       OMDb returns:
+       Response = "True" when movies are found
+    */
 
-
-    if (searchData.Response === "False") {
+    if (data.Response === "False") {
 
         throw new Error(
-            searchData.Error ||
-            "No movies found."
+            data.Error || "Movie not found."
         );
+
     }
 
 
-    const movies =
-        await Promise.all(
+    return data.Search || [];
 
-            searchData.Search
-                .slice(0, 10)
-                .map(
-                    async ({ imdbID }) => {
-
-                        try {
-
-                            return await fetchJSON(
-                                `https://www.omdbapi.com/?apikey=${encodeURIComponent(key)}&i=${imdbID}&plot=short`
-                            );
-
-                        }
-
-                        catch {
-
-                            return null;
-                        }
-
-                    }
-                )
-
-        );
+}
 
 
-    return movies.filter(Boolean);
-};
+/* =========================================
+   5. DISPLAY MOVIES
+========================================= */
+
+function displayMovies(movies) {
+
+    grid.innerHTML = "";
 
 
-const displayMovies = (movies) => {
+    if (!movies || movies.length === 0) {
 
-    grid.innerHTML =
+        grid.innerHTML = `
 
-        movies.map(
-            (movie) => `
+            <div class="empty">
 
-            <article class="movie-card">
+                🎬
 
-                <img
-                    class="poster"
-                    src="${
-                        movie.Poster !== "N/A"
-                            ? movie.Poster
-                            : "https://via.placeholder.com/300x450?text=No+Poster"
-                    }"
-                    alt="${movie.Title} poster"
-                >
+                <br><br>
 
-                <div class="movie-info">
+                No movies found.
 
-                    <h3>
-                        ${movie.Title}
-                    </h3>
+                <br><br>
 
-                    <div class="meta">
+                Try another movie name.
 
-                        <span>
-                            ${movie.Year}
-                        </span>
+            </div>
 
-                        <span class="rating">
-                            ★ ${movie.imdbRating}
-                        </span>
+        `;
 
-                    </div>
+        return;
+    }
 
-                    <p class="plot">
 
-                        ${
-                            movie.Plot !== "N/A"
-                                ? movie.Plot
-                                : "Plot information is not available."
-                        }
+    movies.forEach((movie) => {
 
-                    </p>
+        const card =
+            document.createElement("article");
+
+
+        card.className = "movie-card";
+
+
+        const title =
+            movie.Title || "Unknown Movie";
+
+
+        const year =
+            movie.Year || "N/A";
+
+
+        const poster =
+            movie.Poster !== "N/A"
+                ? movie.Poster
+                : "https://via.placeholder.com/500x750?text=No+Poster";
+
+
+        card.innerHTML = `
+
+            <img
+                class="movie-poster"
+                src="${poster}"
+                alt="${title} poster"
+                onerror="
+                    this.src='https://via.placeholder.com/500x750?text=No+Poster'
+                "
+            >
+
+            <div class="movie-info">
+
+                <h3>
+                    ${title}
+                </h3>
+
+                <div class="movie-meta">
+
+                    <span>
+                        ${year}
+                    </span>
+
+                    <span class="movie-rating">
+                        ${movie.Type || "Movie"}
+                    </span>
 
                 </div>
 
-            </article>
+            </div>
 
-        `
-        ).join("");
-};
+        `;
 
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+
+/* =========================================
+   6. SEARCH FORM
+========================================= */
 
 form.addEventListener(
     "submit",
@@ -178,50 +185,110 @@ form.addEventListener(
         event.preventDefault();
 
 
-        const title =
+        const movieName =
             input.value.trim();
 
 
-        if (!title) {
+        /* EMPTY SEARCH */
+
+        if (movieName === "") {
 
             status.textContent =
-                "Please enter a movie title.";
+                "Please enter a movie name.";
+
+            grid.innerHTML = "";
 
             return;
         }
 
 
+        /* API KEY CHECK */
+
+        if (
+            API_KEY ===
+            "PASTE_YOUR_OMDB_API_KEY_HERE"
+        ) {
+
+            status.textContent =
+                "Please add your OMDb API key in movie.js.";
+
+            grid.innerHTML = `
+
+                <div class="empty">
+
+                    🔑
+
+                    <br><br>
+
+                    OMDb API key is missing.
+
+                </div>
+
+            `;
+
+            return;
+        }
+
+
+        /* LOADING */
+
         status.textContent =
-            "Searching movies...";
+            `Searching for "${movieName}"...`;
 
 
-        grid.innerHTML = "";
+        grid.innerHTML = `
+
+            <div class="loading">
+
+                Searching...
+
+            </div>
+
+        `;
 
 
         try {
 
             const movies =
-                await searchMovies(title);
+                await searchMovies(movieName);
 
 
             displayMovies(movies);
 
 
             status.textContent =
-                `${movies.length} movie(s) found.`;
+                `${movies.length} movie result(s) found.`;
 
         }
 
+
         catch (error) {
 
+            console.error(error);
+
+
             grid.innerHTML = `
+
                 <div class="empty">
-                    🎬 No movies found.
+
+                    ⚠️
+
+                    <br><br>
+
+                    ${error.message}
+
+                    <br><br>
+
+                    Please try another movie name.
+
                 </div>
+
             `;
 
+
             status.textContent =
-                `⚠️ ${error.message}`;
+                "Movie search failed.";
+
         }
 
     }

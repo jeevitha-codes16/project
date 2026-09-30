@@ -2,77 +2,80 @@ import { fetchJSON } from "./api.js";
 
 
 const form =
-    document.querySelector("#weatherForm");
+    document.getElementById("weatherForm");
 
-const cityInput =
-    document.querySelector("#cityInput");
+
+const input =
+    document.getElementById("cityInput");
+
 
 const result =
-    document.querySelector("#weatherResult");
+    document.getElementById("weatherResult");
+
 
 const status =
-    document.querySelector("#weatherStatus");
+    document.getElementById("weatherStatus");
 
 
-const weatherCodes = {
+/* WEATHER CODE */
 
-    0: "Clear Sky",
+function getWeatherCondition(code) {
 
-    1: "Mainly Clear",
+    if (code === 0) {
+        return "Clear sky";
+    }
 
-    2: "Partly Cloudy",
+    if ([1, 2, 3].includes(code)) {
+        return "Partly cloudy";
+    }
 
-    3: "Overcast",
+    if ([45, 48].includes(code)) {
+        return "Foggy";
+    }
 
-    45: "Fog",
+    if ([51, 53, 55, 56, 57].includes(code)) {
+        return "Drizzle";
+    }
 
-    48: "Rime Fog",
+    if ([61, 63, 65, 66, 67].includes(code)) {
+        return "Rain";
+    }
 
-    51: "Light Drizzle",
+    if ([71, 73, 75, 77].includes(code)) {
+        return "Snow";
+    }
 
-    53: "Moderate Drizzle",
+    if ([80, 81, 82].includes(code)) {
+        return "Rain showers";
+    }
 
-    55: "Dense Drizzle",
+    if ([95, 96, 99].includes(code)) {
+        return "Thunderstorm";
+    }
 
-    61: "Slight Rain",
-
-    63: "Moderate Rain",
-
-    65: "Heavy Rain",
-
-    71: "Slight Snow",
-
-    73: "Moderate Snow",
-
-    75: "Heavy Snow",
-
-    80: "Rain Showers",
-
-    81: "Moderate Rain Showers",
-
-    82: "Heavy Rain Showers",
-
-    95: "Thunderstorm",
-
-    96: "Thunderstorm with Hail",
-
-    99: "Heavy Thunderstorm"
-};
+    return "Unknown";
+}
 
 
-const getWeather = async (city) => {
+/* SEARCH WEATHER */
+
+async function searchWeather(city) {
 
     const locationURL =
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+
 
     const locationData =
         await fetchJSON(locationURL);
 
 
-    if (!locationData.results?.length) {
+    if (
+        !locationData.results ||
+        locationData.results.length === 0
+    ) {
 
         throw new Error(
-            "City not found. Please check the city name."
+            "City not found."
         );
 
     }
@@ -83,7 +86,8 @@ const getWeather = async (city) => {
         longitude,
         name,
         country
-    } = locationData.results[0];
+    } =
+        locationData.results[0];
 
 
     const weatherURL =
@@ -95,108 +99,82 @@ const getWeather = async (city) => {
 
 
     return {
-        ...weatherData.current,
-        name,
-        country
-    };
-};
-
-
-const displayWeather = (data) => {
-
-    const {
         name,
         country,
-        temperature_2m,
-        relative_humidity_2m,
-        weather_code,
-        wind_speed_10m
-    } = data;
+        weather: weatherData.current
+    };
+}
+
+
+/* DISPLAY */
+
+function displayWeather(data) {
+
+    const weather =
+        data.weather;
+
+
+    const condition =
+        getWeatherCondition(
+            weather.weather_code
+        );
 
 
     result.innerHTML = `
 
-        <div class="weather-main">
+        <article class="weather-card">
 
-            <div>
-
-                <div class="location">
-                    ${name}, ${country}
-                </div>
-
-                <h2>
-                    ${weatherCodes[weather_code]
-                        || "Current Conditions"}
-                </h2>
-
-                <div class="condition">
-                    Current Weather
-                </div>
-
-            </div>
+            <h2>
+                ${data.name}, ${data.country}
+            </h2>
 
 
             <div class="temperature">
-
-                ${Math.round(temperature_2m)}
-
-                <span class="unit">
-                    °C
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <div class="weather-details">
-
-            <div class="detail">
-
-                <span>
-                    💧 Humidity
-                </span>
-
-                <strong>
-                    ${relative_humidity_2m}%
-                </strong>
-
+                ${weather.temperature_2m}°C
             </div>
 
 
-            <div class="detail">
+            <p class="condition">
+                ${condition}
+            </p>
 
-                <span>
-                    💨 Wind Speed
-                </span>
 
-                <strong>
-                    ${wind_speed_10m} km/h
-                </strong>
+            <div class="weather-details">
+
+                <div class="detail">
+
+                    <span>
+                        Humidity
+                    </span>
+
+                    <strong>
+                        ${weather.relative_humidity_2m}%
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        Wind Speed
+                    </span>
+
+                    <strong>
+                        ${weather.wind_speed_10m} km/h
+                    </strong>
+
+                </div>
 
             </div>
 
-
-            <div class="detail">
-
-                <span>
-                    🌡️ Temperature
-                </span>
-
-                <strong>
-                    ${temperature_2m} °C
-                </strong>
-
-            </div>
-
-        </div>
+        </article>
 
     `;
+}
 
 
-    result.classList.remove("hidden");
-};
-
+/* FORM */
 
 form.addEventListener(
     "submit",
@@ -206,7 +184,7 @@ form.addEventListener(
 
 
         const city =
-            cityInput.value.trim();
+            input.value.trim();
 
 
         if (!city) {
@@ -214,34 +192,56 @@ form.addEventListener(
             status.textContent =
                 "Please enter a city name.";
 
+            result.innerHTML = "";
+
             return;
         }
 
 
         status.textContent =
-            "Loading weather information...";
+            "Loading weather...";
 
 
-        result.classList.add("hidden");
+        result.innerHTML = "";
 
 
         try {
 
-            const weather =
-                await getWeather(city);
+            const data =
+                await searchWeather(city);
 
 
-            displayWeather(weather);
+            displayWeather(data);
 
 
-            status.textContent = "";
+            status.textContent =
+                "Weather information updated.";
 
         }
 
+
         catch (error) {
 
+            console.error(error);
+
+
             status.textContent =
-                `⚠️ ${error.message}`;
+                "Unable to find weather information.";
+
+
+            result.innerHTML = `
+
+                <div class="empty">
+
+                    ⚠️
+
+                    <br><br>
+
+                    ${error.message}
+
+                </div>
+
+            `;
 
         }
 

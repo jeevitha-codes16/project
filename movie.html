@@ -10,11 +10,11 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>FLARE | Weather</title>
+    <title>FLARE | Movies</title>
 
     <link rel="stylesheet" href="style.css">
 
-    <link rel="stylesheet" href="weather.css">
+    <link rel="stylesheet" href="movie.css">
 
 </head>
 
@@ -35,11 +35,11 @@
             Home
         </a>
 
-        <a href="weather.html" class="active">
+        <a href="weather.html">
             Weather
         </a>
 
-        <a href="movie.html">
+        <a href="movie.html" class="active">
             Movies
         </a>
 
@@ -49,24 +49,24 @@
 
 
 
-<main class="weather-container">
+<main class="movie-container">
 
 
-    <section class="weather-heading">
+    <section class="movie-heading">
 
         <p class="eyebrow">
-            WEATHER SEARCH
+            MOVIE SEARCH
         </p>
 
 
         <h1>
-            What's the sky saying?
+            Find your next story.
         </h1>
 
 
         <p>
-            Search any city to see its current
-            weather conditions.
+            Search for any movie and discover
+            something worth watching.
         </p>
 
     </section>
@@ -74,14 +74,14 @@
 
 
     <form
-        id="weatherForm"
-        class="weather-search"
+        id="movieForm"
+        class="search-box"
     >
 
         <input
             type="text"
-            id="cityInput"
-            placeholder="Enter city name..."
+            id="movieInput"
+            placeholder="Enter movie name..."
             autocomplete="off"
             required
         >
@@ -96,15 +96,15 @@
 
 
     <p
-        id="weatherStatus"
-        class="weather-status"
+        id="movieStatus"
+        class="status"
     ></p>
 
 
 
     <section
-        id="weatherResult"
-        class="weather-result"
+        id="movieGrid"
+        class="movie-grid"
     ></section>
 
 
@@ -113,14 +113,13 @@
 
 
 <footer>
-    FLARE • Weather
+    FLARE • Movies
 </footer>
 
 
 
 <script
-    type="module"
-    src="weather.js"
+    src="movie.js"
 ></script>
 
 

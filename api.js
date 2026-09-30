@@ -1,4 +1,4 @@
-export const fetchJSON = async (url) => {
+export async function fetchJSON(url) {
 
     const response =
         await fetch(url);
@@ -7,10 +7,15 @@ export const fetchJSON = async (url) => {
     if (!response.ok) {
 
         throw new Error(
-            "Unable to connect to the API."
+            `Request failed: ${response.status}`
         );
+
     }
 
 
-    return response.json();
-};
+    const data =
+        await response.json();
+
+
+    return data;
+}
